@@ -22,9 +22,11 @@ $livros = $livroController->listarLivros();
     <header>
         <h1>Troca de Livros</h1>
         <nav>
+            <a href="index.php">Início</a>
             <?php if ($authController->estaLogado()): ?>
                 <a href="perfil.php">Meu Perfil</a>
                 <a href="livros.php">Meus Livros</a>
+                <a href="minhas_trocas.php">Minhas Trocas</a>
                 <a href="?logout=true">Sair</a>
             <?php else: ?>
                 <a href="login.php">Entrar</a>
@@ -47,6 +49,13 @@ $livros = $livroController->listarLivros();
                         <p><strong>Gênero:</strong> <?= htmlspecialchars($livro->getGenero()) ?></p>
                         <p><strong>Condição:</strong> <?= htmlspecialchars($livro->getCondicao()) ?></p>
                         <p><?= nl2br(htmlspecialchars($livro->getSinopse())) ?></p>
+                        
+                        <!-- BOTÃO DE SOLICITAÇÃO DENTRO DA MESMA DIV -->
+                        <?php if ($authController->estaLogado() && $livro->getUsuarioId() != $authController->getUsuarioLogado()->getId() && $livro->isDisponivel()): ?>
+                            <div class="acao-troca">
+                                <a href="solicitar_troca.php?livro_id=<?= $livro->getId() ?>" class="button">Solicitar Troca</a>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>

@@ -114,7 +114,39 @@ class LivroDAO
             ':id' => $livro->getId()
         ]);
     }
+public function atualizarDisponibilidade(int $id, bool $disponivel): bool
+{
+    $sql = "UPDATE livros SET disponivel = :disponivel WHERE id = :id";
+    $stmt = $this->pdo->prepare($sql);
+    return $stmt->execute([
+        ':disponivel' => $disponivel,
+        ':id' => $id
+    ]);
+}
 
+public function buscarLivrosDisponiveis(int $usuarioId): array
+{
+    $sql = "SELECT * FROM livros WHERE disponivel = 1 AND usuario_id != :usuario_id ORDER BY titulo";
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute([':usuario_id' => $usuarioId]);
+    
+    $livros = [];
+    while ($row = $stmt->fetch()) {
+        $livros[] = new Livro(
+            $row['titulo'],
+            $row['autor'],
+            $row['genero'],
+            $row['sinopse'],
+            $row['condicao'],
+            (bool)$row['disponivel'],
+            (int)$row['usuario_id'],
+            (int)$row['id'],
+            $row['criado_em']
+        );
+    }
+    
+    return $livros;
+}
     public function excluir(int $id): bool
     {
         $sql = "DELETE FROM livros WHERE id = :id";
