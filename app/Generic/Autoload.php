@@ -8,7 +8,8 @@ class Autoload {
             $prefixes = [
                 'App\\' => __DIR__ . '/../',
                 'Controllers\\' => __DIR__ . '/../Controllers/',
-                'Generic\\' => __DIR__ . '/'
+                'Generic\\' => __DIR__ . '/',
+                'Config\\' => __DIR__ . '/../../config/'
             ];
 
             foreach ($prefixes as $prefix => $base_dir) {
@@ -26,6 +27,8 @@ class Autoload {
                 }
             }
 
+            // Debug para classe não encontrada
+            error_log("🔧 AUTOLOAD ERROR: Classe não encontrada: $class");
             return false;
         });
     }

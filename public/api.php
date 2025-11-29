@@ -5,31 +5,11 @@ ini_set('display_errors', 1);
 
 echo "🔧 DEBUG: API iniciada\n";
 
-// Carregar APENAS database e sessão
-require_once __DIR__ . '/../config/database.php';
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-echo "🔧 DEBUG: Database e sessão carregados\n";
-
-// ⭐⭐ CARREGAR TODAS AS CLASSES GENERIC ⭐⭐
-require_once __DIR__ . '/../app/Generic/Retorno.php';
-require_once __DIR__ . '/../app/Generic/Acao.php';
-require_once __DIR__ . '/../app/Generic/Controller.php';
-require_once __DIR__ . '/../app/Generic/Endpoint.php';
-require_once __DIR__ . '/../app/Generic/Rotas.php';
-require_once __DIR__ . '/../app/Generic/MysqlSingleton.php';
+// ⭐⭐ CARREGAR E REGISTRAR AUTOLOAD PRIMEIRO ⭐⭐
 require_once __DIR__ . '/../app/Generic/Autoload.php';
+Generic\Autoload::register();
 
-// ⭐⭐ CARREGAR CLASSES DO APP MANUALMENTE ⭐⭐
-require_once __DIR__ . '/../app/DAO/LivroDAO.php';
-require_once __DIR__ . '/../app/Models/Livro.php';
-
-// Carregar controllers
-require_once __DIR__ . '/../app/Controllers/ApiLivroController.php';
-
-echo "🔧 DEBUG: Todas as classes carregadas\n";
+echo "🔧 DEBUG: Autoload registrado\n";
 
 // Configurar cabeçalhos CORS
 header("Content-Type: application/json; charset=UTF-8");

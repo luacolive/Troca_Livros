@@ -1,20 +1,20 @@
 <?php
 namespace Controllers;
 
-use Generic\Controller;
+use Generic\Acao;
 use App\DAO\LivroDAO;
 use App\Models\Livro;
+use Generic\MysqlSingleton;
 
-class ApiLivroController extends Controller {
+class ApiLivroController extends Acao {
     private $livroDAO;
     private $pdo;
 
     public function __construct() {
         parent::__construct();
         
-        // ✅ CONEXÃO CORRETA - usando sua função getPDOConnection()
-        require_once __DIR__ . '/../../config/database.php';
-        $this->pdo = getPDOConnection();
+        // ✅ USANDO SINGLETON CORRETAMENTE
+        $this->pdo = MysqlSingleton::getInstance();
         $this->livroDAO = new LivroDAO($this->pdo);
     }
 
@@ -139,23 +139,23 @@ class ApiLivroController extends Controller {
     }
 
     public function excluir($params) {
-    try {
-        // Verificar se o livro existe antes de excluir
-        $livro = $this->livroDAO->buscarPorId($params['id']);
-        if (!$livro) {
-            $this->retorno->erro("Livro não encontrado", 404);
-            return;
-        }
+        try {
+            // Verificar se o livro existe antes de excluir
+            $livro = $this->livroDAO->buscarPorId($params['id']);
+            if (!$livro) {
+                $this->retorno->erro("Livro não encontrado", 404);
+                return;
+            }
 
-        $resultado = $this->livroDAO->excluir($params['id']);
-        if ($resultado) {
-            $this->retorno->sucesso(['mensagem' => 'Livro excluído com sucesso']);
-        } else {
-            $this->retorno->erro("Erro ao excluir livro", 500);
+            $resultado = $this->livroDAO->excluir($params['id']);
+            if ($resultado) {
+                $this->retorno->sucesso(['mensagem' => 'Livro excluído com sucesso']);
+            } else {
+                $this->retorno->erro("Erro ao excluir livro", 500);
+            }
+        } catch (\Exception $e) {
+            $this->retorno->erro($e->getMessage(), 400);
         }
-    } catch (\Exception $e) {
-        $this->retorno->erro($e->getMessage(), 400);
     }
-}
 }
 ?>
