@@ -13,7 +13,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 echo "🔧 DEBUG: Database e sessão carregados\n";
 
-// ⭐⭐ CARREGAR TODAS AS CLASSES GENERIC NA ORDEM CORRETA ⭐⭐
+// ⭐⭐ CARREGAR TODAS AS CLASSES GENERIC ⭐⭐
 require_once __DIR__ . '/../app/Generic/Retorno.php';
 require_once __DIR__ . '/../app/Generic/Acao.php';
 require_once __DIR__ . '/../app/Generic/Controller.php';
@@ -21,6 +21,10 @@ require_once __DIR__ . '/../app/Generic/Endpoint.php';
 require_once __DIR__ . '/../app/Generic/Rotas.php';
 require_once __DIR__ . '/../app/Generic/MysqlSingleton.php';
 require_once __DIR__ . '/../app/Generic/Autoload.php';
+
+// ⭐⭐ CARREGAR CLASSES DO APP MANUALMENTE ⭐⭐
+require_once __DIR__ . '/../app/DAO/LivroDAO.php';
+require_once __DIR__ . '/../app/Models/Livro.php';
 
 // Carregar controllers
 require_once __DIR__ . '/../app/Controllers/ApiLivroController.php';
@@ -46,18 +50,17 @@ try {
     $rotas = new Generic\Rotas();
     echo "🔧 DEBUG: Rotas criadas\n";
 
-    // Rotas para Livros
-    $rotas->adicionar('GET', '/api/livros', 'ApiLivroController@listar');
-    $rotas->adicionar('GET', '/api/livros/{id}', 'ApiLivroController@buscar');
-    $rotas->adicionar('POST', '/api/livros', 'ApiLivroController@criar');
-    $rotas->adicionar('PUT', '/api/livros/{id}', 'ApiLivroController@atualizar');
-    $rotas->adicionar('DELETE', '/api/livros/{id}', 'ApiLivroController@excluir');
+    // Rotas para Livros - URLs BONITAS
+    $rotas->adicionar('GET', '/livros', 'ApiLivroController@listar');
+    $rotas->adicionar('GET', '/livros/{id}', 'ApiLivroController@buscar');
+    $rotas->adicionar('POST', '/livros', 'ApiLivroController@criar');
+    $rotas->adicionar('PUT', '/livros/{id}', 'ApiLivroController@atualizar');
+    $rotas->adicionar('DELETE', '/livros/{id}', 'ApiLivroController@excluir');
     echo "🔧 DEBUG: Rotas adicionadas\n";
 
     // Executar a rota
-    $uri = str_replace('/Troca_Livros-main/public/api.php', '', $_SERVER['REQUEST_URI']);
-$_SERVER['REQUEST_URI'] = $uri ?: '/';
-$rotas->executar();;
+    $rotas->executar();
+    echo "🔧 DEBUG: Rotas executadas\n";
     
 } catch (Exception $e) {
     echo "🔧 DEBUG: Erro: " . $e->getMessage();
