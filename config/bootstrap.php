@@ -3,7 +3,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Função para carregar classes automaticamente
+// Função para carregar classes automaticamente (SEU AUTOLOAD ORIGINAL)
 spl_autoload_register(function ($class) {
     $prefix = 'App\\';
     $base_dir = __DIR__ . '/../app/';
@@ -28,3 +28,8 @@ require_once __DIR__ . '/database.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+// AUTOLOAD DA API (SEM CONFLITO)
+require_once __DIR__ . '/../Generic/Autoload.php';
+Generic\Autoload::register();
+?>
