@@ -1,7 +1,7 @@
 <?php
 namespace Generic;
 
-class Controller {
+class Acao {
     protected $retorno;
 
     public function __construct() {
