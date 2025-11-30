@@ -13,7 +13,7 @@ class Rotas {
         $metodo = $_SERVER['REQUEST_METHOD'];
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         
-        // ⭐⭐ REMOVER o base path da URL ⭐⭐
+        // limpando a url
         $scriptDir = dirname($_SERVER['SCRIPT_NAME']);
         if ($scriptDir !== '/' && strpos($uri, $scriptDir) === 0) {
             $uri = substr($uri, strlen($scriptDir));
@@ -26,7 +26,7 @@ class Rotas {
         
         echo "🔧 DEBUG: URI processada: $uri\n";
         
-        // ✅ CORRIGIDO PARA USAR ENDPOINT
+        // usando os endpoints
         foreach ($this->rotas as $endpoint) {
             if ($endpoint->getMetodo() === $metodo && $this->corresponde($endpoint->getCaminho(), $uri)) {
                 list($controller, $acao) = explode('@', $endpoint->getHandler());

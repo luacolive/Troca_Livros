@@ -43,7 +43,7 @@ class ApiLivroController extends Acao {
     }
 
     public function buscar($params) {
-        // ✅ PÚBLICO - não requer autenticação
+        // Busca pública (pois é um site de trocas)
         try {
             $livro = $this->livroDAO->buscarPorId($params['id']);
             if ($livro) {
@@ -68,7 +68,7 @@ class ApiLivroController extends Acao {
     }
 
     public function criar() {
-        // 🔐 PRIVADO - requer autenticação
+        //autenticação
         try {
             $usuario = $this->requerirAutenticacao();
             
@@ -107,7 +107,7 @@ class ApiLivroController extends Acao {
     }
 
     public function atualizar($params) {
-        // 🔐 PRIVADO - requer autenticação
+        // Autenticação
         try {
             $usuario = $this->requerirAutenticacao();
             
@@ -119,7 +119,7 @@ class ApiLivroController extends Acao {
                 return;
             }
 
-            // ✅ Verificar se o livro pertence ao usuário
+            // Verificação livro-usuário
             if ($livroExistente->getUsuarioId() != $usuario->usuario_id) {
                 $this->retorno->erro("Você não tem permissão para editar este livro", 403);
                 return;
@@ -149,7 +149,7 @@ class ApiLivroController extends Acao {
     }
 
     public function excluir($params) {
-        // 🔐 PRIVADO - requer autenticação
+        // Excluir apenas se autenticado
         try {
             $usuario = $this->requerirAutenticacao();
             
@@ -159,7 +159,7 @@ class ApiLivroController extends Acao {
                 return;
             }
 
-            // ✅ Verificar se o livro pertence ao usuário
+            // Verificação livro-usuário
             if ($livro->getUsuarioId() != $usuario->usuario_id) {
                 $this->retorno->erro("Você não tem permissão para excluir este livro", 403);
                 return;
