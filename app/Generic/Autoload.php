@@ -6,10 +6,13 @@ class Autoload {
         spl_autoload_register(function ($class) {
             // Mapear namespaces para diretórios
             $prefixes = [
+                
                 'App\\' => __DIR__ . '/../',
                 'Controllers\\' => __DIR__ . '/../Controllers/',
                 'Generic\\' => __DIR__ . '/',
-                'Config\\' => __DIR__ . '/../../config/'
+                'config\\' => __DIR__ . '/../../config/',
+                'Middleware\\' => __DIR__ . '/../Middleware/'
+                
             ];
 
             foreach ($prefixes as $prefix => $base_dir) {

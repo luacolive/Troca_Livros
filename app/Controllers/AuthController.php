@@ -1,65 +1,119 @@
 <?php
-namespace App\Controllers;
+namespace Controllers;
 
+use Generic\Acao;
 use App\DAO\UsuarioDAO;
 use App\Models\Usuario;
+use Generic\MysqlSingleton;
 
-class AuthController
-{
+class AuthController extends Acao {
     private $usuarioDAO;
+    private $pdo;
 
-    public function __construct($pdo)
-    {
-        $this->usuarioDAO = new UsuarioDAO($pdo);
+    public function __construct() {
+        parent::__construct();
+        $this->pdo = MysqlSingleton::getInstance();
+        $this->usuarioDAO = new UsuarioDAO($this->pdo);
     }
 
-    public function login($email, $senha)
-    {
-        $usuario = $this->usuarioDAO->buscarPorEmail($email);
-        
-        if ($usuario && password_verify($senha, $usuario->getSenhaHash())) {
-            $_SESSION['usuario_id'] = $usuario->getId();
-            $_SESSION['usuario_nome'] = $usuario->getNome();
-            return true;
+    public function login() {
+        try {
+            $dados = json_decode(file_get_contents("php://input"), true);
+
+            if (empty($dados['email']) || empty($dados['senha'])) {
+                $this->retorno->erro("Email e senha são obrigatórios", 400);
+                return;
+            }
+
+            $usuario = $this->usuarioDAO->buscarPorEmail($dados['email']);
+            
+            if (!$usuario || !password_verify($dados['senha'], $usuario->getSenhaHash())) {
+                $this->retorno->erro("Credenciais inválidas", 401);
+                return;
+            }
+
+            $token = $this->gerarToken([
+                'usuario_id' => $usuario->getId(),
+                'nome' => $usuario->getNome(),
+                'email' => $usuario->getEmail()
+            ]);
+
+            $this->retorno->sucesso([
+                'mensagem' => 'Login realizado com sucesso',
+                'token' => $token,
+                'usuario' => [
+                    'id' => $usuario->getId(),
+                    'nome' => $usuario->getNome(),
+                    'email' => $usuario->getEmail()
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            $this->retorno->erro("Erro interno no servidor", 500);
         }
-        
-        return false;
     }
 
-    public function logout()
-    {
-        session_destroy();
-        header('Location: /');
-        exit;
-    }
+    public function registrar() {
+        try {
+            $dados = json_decode(file_get_contents("php://input"), true);
 
-    public function registrar($nome, $email, $senha, $endereco = null, $telefone = null)
-    {
-        // Verificar se o email já existe
-        if ($this->usuarioDAO->buscarPorEmail($email)) {
-            return false;
+            if (empty($dados['nome']) || empty($dados['email']) || empty($dados['senha'])) {
+                $this->retorno->erro("Nome, email e senha são obrigatórios", 400);
+                return;
+            }
+
+            if ($this->usuarioDAO->buscarPorEmail($dados['email'])) {
+                $this->retorno->erro("Email já cadastrado", 400);
+                return;
+            }
+
+            $senhaHash = password_hash($dados['senha'], PASSWORD_DEFAULT);
+
+            $usuario = new Usuario(
+                $dados['nome'],
+                $dados['email'],
+                $senhaHash,
+                $dados['endereco'] ?? null,
+                $dados['telefone'] ?? null
+            );
+
+            $resultado = $this->usuarioDAO->inserir($usuario);
+            
+            if ($resultado) {
+                $this->retorno->sucesso(['mensagem' => 'Usuário criado com sucesso'], 201);
+            } else {
+                $this->retorno->erro("Erro ao criar usuário", 500);
+            }
+
+        } catch (\Exception $e) {
+            $this->retorno->erro("Erro interno no servidor", 500);
         }
-
-        $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
-        $usuario = new Usuario($nome, $email, $senhaHash, $endereco, $telefone);
-        
-        if ($this->usuarioDAO->inserir($usuario)) {
-            return $this->login($email, $senha);
-        }
-        
-        return false;
     }
 
-    public function estaLogado()
-    {
-        return isset($_SESSION['usuario_id']);
-    }
+    public function perfil() {
+        try {
+            $usuario = $this->requerirAutenticacao();
+            
+            $usuarioCompleto = $this->usuarioDAO->buscarPorId($usuario->usuario_id);
+            
+            if ($usuarioCompleto) {
+                $this->retorno->sucesso([
+                    'usuario' => [
+                        'id' => $usuarioCompleto->getId(),
+                        'nome' => $usuarioCompleto->getNome(),
+                        'email' => $usuarioCompleto->getEmail(),
+                        'endereco' => $usuarioCompleto->getEndereco(),
+                        'telefone' => $usuarioCompleto->getTelefone(),
+                        'criado_em' => $usuarioCompleto->getCriadoEm()
+                    ]
+                ]);
+            } else {
+                $this->retorno->erro("Usuário não encontrado", 404);
+            }
 
-    public function getUsuarioLogado()
-    {
-        if ($this->estaLogado()) {
-            return $this->usuarioDAO->buscarPorId($_SESSION['usuario_id']);
+        } catch (\Exception $e) {
+            $this->retorno->erro("Erro interno no servidor", 500);
         }
-        return null;
     }
 }
+?>

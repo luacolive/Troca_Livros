@@ -12,17 +12,15 @@ class ApiLivroController extends Acao {
 
     public function __construct() {
         parent::__construct();
-        
-        // ✅ USANDO SINGLETON CORRETAMENTE
         $this->pdo = MysqlSingleton::getInstance();
         $this->livroDAO = new LivroDAO($this->pdo);
     }
 
     public function listar() {
+        // ✅ PÚBLICO - não requer autenticação
         try {
             $livros = $this->livroDAO->listarTodos();
             
-            // Converter objetos Livro para array
             $livrosArray = [];
             foreach ($livros as $livro) {
                 $livrosArray[] = [
@@ -45,6 +43,7 @@ class ApiLivroController extends Acao {
     }
 
     public function buscar($params) {
+        // ✅ PÚBLICO - não requer autenticação
         try {
             $livro = $this->livroDAO->buscarPorId($params['id']);
             if ($livro) {
@@ -69,7 +68,10 @@ class ApiLivroController extends Acao {
     }
 
     public function criar() {
+        // 🔐 PRIVADO - requer autenticação
         try {
+            $usuario = $this->requerirAutenticacao();
+            
             $dados = json_decode(file_get_contents("php://input"), true);
             
             if (empty($dados['titulo']) || empty($dados['autor'])) {
@@ -84,20 +86,19 @@ class ApiLivroController extends Acao {
                 $dados['sinopse'] ?? '',
                 $dados['condicao'] ?? 'Bom',
                 true,
-                $dados['usuario_id'] ?? 1,
+                $usuario->usuario_id, // ✅ Usa ID do usuário autenticado
                 null,
                 null
             );
 
             $resultado = $this->livroDAO->inserir($livro);
             if ($resultado) {
-                $lastId = $this->pdo->lastInsertId();
                 $this->retorno->sucesso([
                     'mensagem' => 'Livro criado com sucesso!',
-                    'id' => $lastId
+                    'id' => $this->pdo->lastInsertId()
                 ], 201);
             } else {
-                $this->retorno->erro("Erro ao criar livro no banco de dados", 500);
+                $this->retorno->erro("Erro ao criar livro", 500);
             }
 
         } catch (\Exception $e) {
@@ -106,12 +107,21 @@ class ApiLivroController extends Acao {
     }
 
     public function atualizar($params) {
+        // 🔐 PRIVADO - requer autenticação
         try {
+            $usuario = $this->requerirAutenticacao();
+            
             $dados = json_decode(file_get_contents("php://input"), true);
             
             $livroExistente = $this->livroDAO->buscarPorId($params['id']);
             if (!$livroExistente) {
                 $this->retorno->erro("Livro não encontrado", 404);
+                return;
+            }
+
+            // ✅ Verificar se o livro pertence ao usuário
+            if ($livroExistente->getUsuarioId() != $usuario->usuario_id) {
+                $this->retorno->erro("Você não tem permissão para editar este livro", 403);
                 return;
             }
 
@@ -122,7 +132,7 @@ class ApiLivroController extends Acao {
                 $dados['sinopse'] ?? $livroExistente->getSinopse(),
                 $dados['condicao'] ?? $livroExistente->getCondicao(),
                 $dados['disponivel'] ?? $livroExistente->isDisponivel(),
-                $dados['usuario_id'] ?? $livroExistente->getUsuarioId(),
+                $usuario->usuario_id, // ✅ Mantém o usuário dono
                 $params['id'],
                 $livroExistente->getCriadoEm()
             );
@@ -139,11 +149,19 @@ class ApiLivroController extends Acao {
     }
 
     public function excluir($params) {
+        // 🔐 PRIVADO - requer autenticação
         try {
-            // Verificar se o livro existe antes de excluir
+            $usuario = $this->requerirAutenticacao();
+            
             $livro = $this->livroDAO->buscarPorId($params['id']);
             if (!$livro) {
                 $this->retorno->erro("Livro não encontrado", 404);
+                return;
+            }
+
+            // ✅ Verificar se o livro pertence ao usuário
+            if ($livro->getUsuarioId() != $usuario->usuario_id) {
+                $this->retorno->erro("Você não tem permissão para excluir este livro", 403);
                 return;
             }
 
